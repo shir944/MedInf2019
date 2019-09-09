@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Sep 07 16:53:34 2019
-
-@author: slavie
-"""
-
 from PyQt5 import QtWebEngineWidgets, QtCore, QtGui, QtWidgets
 from OpenGL.GL import *
 
@@ -18,6 +11,9 @@ from gui6_arch_analysis import Datendiagramm, AnalysisWidget
 
 class GLWidget(QtWidgets.QOpenGLWidget):
 
+    """
+    Die Klasse erzeugt das Bild Objekt mithilfe von OpenGLWidget
+    """
     def __init__(self, **kwargs):
         super(GLWidget, self).__init__(**kwargs)
         self.xRot = 0.0
@@ -66,8 +62,6 @@ class GLWidget(QtWidgets.QOpenGLWidget):
             glMatrixMode(GL_PROJECTION)
             glLoadIdentity()
             glOrtho(-1, 1, -1, 1, -1, 1)
-            #h = float(height) / float(width);
-            #glFrustum(-1.0, 1.0, -h, h, 5.0, 60.0)
             glMatrixMode(GL_MODELVIEW)
         except:
             traceback.print_exc()
@@ -94,7 +88,9 @@ class GLWidget(QtWidgets.QOpenGLWidget):
         self.update()
 
 class VideoWindow(QtWidgets.QWidget):
-    
+    """
+        Das VideoWindow wird als Tab gezeigt
+    """
     playback = False
     file = None
     improc = None
@@ -108,8 +104,10 @@ class VideoWindow(QtWidgets.QWidget):
         self.init_ui()
         
     def init_ui(self):
+        # Das Bild Objekt wird mit der Klasse GLWidget initialisiert
         self.display = GLWidget(parent=self)
-        
+
+        # Das Diagramm erzeugen um die Pupilenposition zu zeigen
         self.plot_widget = Datendiagramm()
         self.plot_widget.init(100,75,200)
 
@@ -127,6 +125,7 @@ class VideoWindow(QtWidgets.QWidget):
         # beim Anklicken des Pushbuttons aufgerufen
         self.btn_play.clicked.connect(self.play_start)
 
+        # Buttons anzeigen
         self.btn_stop = QtWidgets.QPushButton(self.tr('Stop'))
         self.btn_stop.setCheckable(True)
         self.btn_stop.clicked.connect(self.play_stop)
@@ -172,6 +171,7 @@ class VideoWindow(QtWidgets.QWidget):
     def open_video(self, file):
         self.file = VideoFile(file)
         self.results = Results(file, self.file.length)
+        # Die Klasse IMGProcess aus pgm wird aufgerufen
         self.imgproc = IMGProcess(self.file.width, self.file.height, self.file.length)
         self.plot_widget.init(self.file.width, self.file.height, self.file.length)
 
@@ -240,6 +240,7 @@ class VideoWindow(QtWidgets.QWidget):
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, **kwargs):
         super(MainWindow, self).__init__(**kwargs)
+        # Manubar oben links - Datei öffnen
         menu_file = self.menuBar().addMenu(self.tr('File'))
         menu_file.addAction(self.tr('Open') + '...', self.open_file)
         menu_file.addSeparator()
@@ -273,6 +274,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tabs.setCurrentWidget(self.analysis)
         
     def open_file(self):
+        # Erlauben nur pgm Dateien zu öffnen
         file, _ = QtWidgets.QFileDialog.getOpenFileName(caption=self.tr('Choose video file'),
                                                         filter=self.tr('pgm Video File') + ' *.pgm')
         if file:
@@ -281,17 +283,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tabs.setCurrentWidget(self.video)
             try:
                 self.video.open_video(file)
-            except:
-                traceback.print_exc()
-
-    def open_cda(self):
-        file, _ = QtWidgets.QFileDialog.getOpenFileName(caption=self.tr('Choose CDA file'),
-                                                        filter=self.tr('CDA File') + ' *.xml')
-        if file:
-            self.tabs.setTabEnabled(self.tabs.indexOf(self.report), True)
-            self.tabs.setCurrentWidget(self.report)
-            try:
-                self.report.load_file(file)
             except:
                 traceback.print_exc()
 

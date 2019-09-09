@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Sep 07 16:53:34 2019
-
-@author: slavie
-"""
-
 import pgm
 import numpy as np
 import pandas as pd
@@ -12,13 +5,10 @@ import traceback
 import unittest
 from scipy import signal, ndimage
 
-def fftfilt(B,x,nfft=128):
-    X = np.fft.fft(x,n=nfft)
-    Y = np.fft.ifft(X*B)
-    y = np.real(Y)
-    return y
-
 class IMGProcess():
+    """
+        Klasse zum Berechnen der daten
+    """
     def __init__(self, video_width, video_height, video_length, *args, **kwargs):
         self.init(video_width, video_height, video_length)
 
@@ -48,7 +38,7 @@ class IMGProcess():
         self.k = sharp
 
     def process(self, frame):
-        # Filterung der Image
+        # Filterung der Image mit Median Filter
         ndimage.median_filter(frame, 3, output=self.filt_img)
         ndimage.convolve(self.filt_img, self.k, output=frame)
                 
@@ -58,7 +48,7 @@ class IMGProcess():
         np.sum(pupil, axis=1, dtype=np.int32, out=self.sum_y)
         self.sum_n = np.sum(self.sum_x)
         sn = 1.0/np.sum(self.sum_x)
-        # Skalarprodukt
+        # Skalarprodukt berechnen
         self.com[0] = sn*np.dot(self.sum_x, self.frame_cox)
         self.com[1] = sn*np.dot(self.sum_y, self.frame_coy)
         icom = np.round(self.com).astype(int)
@@ -69,6 +59,9 @@ class IMGProcess():
         return self.com
     
 class VideoFile():
+    """
+    Klasse zum Einlesen der Videodatei
+    """
     def __init__(self, pgmfile):
         try:
             self.video = pgm.PGMReader(pgmfile)
@@ -79,6 +72,7 @@ class VideoFile():
             self.init_video()
 
     def init_video(self):
+        # Video initialisieren
             self.video.seek_frame(0)
             self.frame_no = 0
             self.info = {'length':self.video.length,
@@ -110,7 +104,6 @@ class Results():
         self.filename = filename
         self.n_samples = n_samples
         # Excel-ähnliche Tabelle mit (6) benannten Spalten anlegen und mit nan füllen
-        # s. Pandas-Dokumentation in Python4DataAnalysis.pdf z.B. S. 116
         # vAbs - die absolute Geschwindigkeit
         col = ['Time', 'Hor', 'Ver', 'vHor', 'vVer','vAbs', 'vFilt', 'vFFT', 'vConv']
         self.df = pd.DataFrame(np.full((n_samples,len(col)), np.nan), columns=col)
@@ -160,10 +153,6 @@ class Results():
         return self.df
         
     def save_result(self):
-        # Report als h5, txt und py Datei speichern
-        #df['Time'] = df['Time'].interpolate().round()  # Fill in missing time values
-        #df['Time'].astype(np.int64)
-        #self.df.set_index('Time', inplace=True)
         datastore = pd.HDFStore(self.filename+'.h5')
         datastore['pupil'] = self.df
         datastore.close()
@@ -218,6 +207,7 @@ def Showpgm(pgmfile, n):
     return i
 
 def showpgm(pgmfile, n):
+    # Das Video zeigen
     import matplotlib.pyplot as plt
     
     video = pgm.PGMReader(pgmfile)
@@ -227,6 +217,7 @@ def showpgm(pgmfile, n):
     
     nth = np.int(np.floor(video.length/n))
 
+    # Frames in der Schleife einlesen
     for i, frame_no in enumerate(range(0,video.length,nth),1):
         video.seek_frame(frame_no)
         
@@ -240,5 +231,5 @@ def showpgm(pgmfile, n):
     return i
 
 if __name__ == '__main__':
-    unittest.main()
+    pass
 

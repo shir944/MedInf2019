@@ -1,14 +1,6 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Sep 07 16:53:34 2019
-
-@author: slavie
-"""
-
 from PyQt5 import QtCore,  QtWidgets
 
 import traceback
-
 import sys
 import numpy as np
 import abc
@@ -21,9 +13,9 @@ import matplotlib as plt
 
 class MPLFigure(QtCore.QObject, Figure):
 
-    """Base class for reusable matplotlib figure. Inheriting from QObject 
-    enables us to use Qt's signals/slots and translation mechanisms
-    
+    """
+    Die Klasse erzeugt eine Figur mithilfe von Matplotlib
+    Damit kann man die Funktionen von Qt benutzen
     """
 
     def __init__(self):
@@ -31,34 +23,33 @@ class MPLFigure(QtCore.QObject, Figure):
 
     @abc.abstractmethod
     def init_plots(self):
-        """Clear and initialise plot elements prior to plotting new data
-
+        """
+        plot initialisieren
         """
         pass
 
     @abc.abstractmethod
     def plot_data(self, data):
-        """Plot data
-
-        :param data: Data to be plotted
+        """
+        :param data: Data zum plotten
         """
         pass
 
 
 class Figure1(MPLFigure):
 
-    """Sample figure class
-    
+    """
+    Figur Klasse
     """
 
     def __init__(self):
         super(Figure1, self).__init__()
 
-        # Assign the figure a canvas. This is needed both for saving the figure
-        # and adding to a Qt layout.
+        # Figur auf Canvas speichernAssign the figure a canvas
+        # Zum Speichern und zum Qt addieren
         self.canvas = QtCanvas(self)
 
-        # Create subplots
+        # Subplots erzeugen
         self.ax1 = self.add_subplot(311)
         self.ax2 = self.add_subplot(312, sharex=self.ax1)
         self.ax3 = self.add_subplot(313, sharex=self.ax1)
@@ -67,16 +58,19 @@ class Figure1(MPLFigure):
         self.init_plots()
 
     def init_plots(self):
+        # Erste Diagramm: Pupilenposition
         self.ax1.cla()
         self.ax1.grid()
         self.ax1.set_title(self.tr('Analysis Report'))
         self.ax1.set_ylabel(self.tr('Pupil Position') + ' [px]')
 
+        # Zweite Diagramm: Pupilengeschwindigkeit
         self.ax2.cla()
         self.ax2.grid()
         self.ax2.set_xlabel(self.tr('Time') + '[s]')
         self.ax2.set_ylabel(self.tr('Pupil Velocity') + ' [px/s]')
 
+        # Dritte Diagramm: absolute Geschwindigkeit
         self.ax3.cla()
         self.ax3.grid()
         self.ax3.set_xlabel(self.tr('Time') + '[s]')
@@ -100,8 +94,8 @@ class Figure1(MPLFigure):
 
 class AnalysisWidget(QtWidgets.QWidget):
 
-    """Main window for pupil data analysis
-    
+    """
+    Hauptfenster für die Analyse
     """
 
     output_ready = QtCore.pyqtSignal(str)
@@ -112,12 +106,13 @@ class AnalysisWidget(QtWidgets.QWidget):
         self.init_ui()
 
     def init_ui(self):
-        """ Initialise the user interface
-        
         """
+        Interface initialisieren
+        """
+        # Figur erzeugen
         self.fig1 = Figure1()
 
-        # Create Navigation controls to inspect figure
+        # NavigationToolBar - zum Inspektion der Diagramme
         self.toolbar = NavigationToolbar(self.fig1.canvas, self)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -133,7 +128,9 @@ class Datendiagramm(Figure):
     def __init__(self, *args, **kwargs):
         super(Datendiagramm, self).__init__(*args, **kwargs)
         self.canvas = QtCanvas(self)
-        
+
+        # Diagram für die Pupilenposition
+        # Wird mit dem Video gezeigt
         self.ax = self.add_subplot(111)
         self.ax.grid()
         self.ax.set_xlabel('Frame #')
@@ -144,6 +141,7 @@ class Datendiagramm(Figure):
         self.lines = None
         
     def init(self, width, height, length):
+        # Datendiagramm initialisieren
         self.ax.cla()
         self.ax.grid()
         self.ax.set_xlabel('Frame #')
@@ -169,7 +167,6 @@ class Datendiagramm(Figure):
                 self.ax.draw_artist(self.lines[1])
                 self.canvas.update()
         self.refresh_counter = (self.refresh_counter+1)%self.refresh_rate
-            # self.canvas.flush_events()
     
 if __name__ == '__main__':
 
@@ -180,21 +177,22 @@ if __name__ == '__main__':
             self.tabs = QtWidgets.QTabWidget()
             self.setCentralWidget(self.tabs)
             
-                        # Datendiagramm erzeugen
+            # Datendiagramm erzeugen
             self.plot_widget = Datendiagramm()
             self.plot_widget.init(100,100,100)
             self.tabs.addTab(self.plot_widget.canvas, self.tr('Diagramm'))
-            
+
+            # Analysis Tab erzeugen
             self.analysis = AnalysisWidget(parent=self)
             self.tabs.addTab(self.analysis, self.tr('Analysis'))
-    
-    import sys
+
     app = QtCore.QCoreApplication.instance()
     if app is None:
         app = QtWidgets.QApplication(sys.argv)
     app.references = set()
     
     win = MainWindow()
+    # Program Label
     win.setWindowTitle("Pupile Analyse")
     app.references.add(win)
     win.show()
